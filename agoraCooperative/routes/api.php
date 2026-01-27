@@ -27,7 +27,12 @@ use App\Http\Controllers\Api\StatsController;
 | API Routes
 |--------------------------------------------------------------------------
 */
-
+Route::get('/', function () {
+    return response()->json([
+        'status' => 'OK',
+        'message' => 'API Agora opérationnelle 🚀'
+    ], 200);
+});
 // =======================
 // Routes WEBHOOK (sans auth)
 // =======================

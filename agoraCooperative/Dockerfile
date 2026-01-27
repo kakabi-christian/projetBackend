@@ -36,7 +36,7 @@ RUN composer install --no-interaction --optimize-autoloader --no-dev
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # 9. Pré-optimisation (pendant le build pour accélérer le démarrage)
-RUN php artisan config:cache && php artisan route:cache
+# RUN php artisan config:cache && php artisan route:cache
 
 # 10. Redirection des logs vers la console Railway
 RUN ln -sf /dev/stderr /var/www/html/storage/logs/laravel.log
