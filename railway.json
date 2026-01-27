@@ -2,11 +2,44 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "dockerfilePath": "agoraCooperative/Dockerfile",
-    "context": "."
+    "context": "agoraCooperative"
   },
   "deploy": {
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"
+  },
+  "env": {
+    "APP_NAME": "Agora",
+    "APP_ENV": "production",
+    "APP_KEY": "base64:R0w51QrFqkmbm+7af5bggP3+G168E9GtUwQjqkDRZvE=",
+    "APP_DEBUG": "false",
+    "APP_URL": "https://agoraapp.up.railway.app",
+    "LOG_CHANNEL": "stderr",
+    "SESSION_DRIVER": "cookie",
+    "SESSION_DOMAIN": "agoraapp.up.railway.app",
+    "SESSION_SECURE_COOKIE": "true",
+    "SANCTUM_STATEFUL_DOMAINS": "agoraapp.up.railway.app",
+    "DB_CONNECTION": "mysql",
+    "DB_HOST": "${{MySQL.MYSQLHOST}}",
+    "DB_PORT": "${{MySQL.MYSQLPORT}}",
+    "DB_DATABASE": "${{MySQL.MYSQLDATABASE}}",
+    "DB_USERNAME": "${{MySQL.MYSQLUSER}}",
+    "DB_PASSWORD": "${{MySQL.MYSQLPASSWORD}}",
+    "MAIL_MAILER": "smtp",
+    "MAIL_HOST": "smtp.gmail.com",
+    "MAIL_PORT": "587",
+    "MAIL_USERNAME": "kakabichristian@gmail.com",
+    "MAIL_PASSWORD": "aqutnzsslkljzzzj",
+    "MAIL_ENCRYPTION": "tls",
+    "MAIL_FROM_ADDRESS": "kakabichristian@gmail.com",
+    "MAIL_FROM_NAME": "Agora",
+    "CAMPAY_APP_USERNAME": "O4dPKC0F0lFbGkTIEPjriHQdtWIiuYEZB_XeNQnFvhLSXdUrlqGaZ8W696EhSoWA7wf8QKY271juoO3A2mVeCg",
+    "CAMPAY_APP_PASSWORD": "jqxe6oQFrqXn4sOX1MvMtCJdB-utolZL30yQ7Fev6Nzk8sXhaSovgPf05gIaa6ZEPNwgIIh2ZUQiQmI8btb4Gg",
+    "CAMPAY_TOKEN": "0ec4e878669f982ee1ff5fd3ef7459fe9e4e06f9",
+    "CAMPAY_WEBHOOK_KEY": "w0ItDxsPFzAblTRCIgrK5EYmjQADBv3EB2gzY4ZFs9_ZC_COsAP3UuIAXyzRbQggm3CphN8u4Bnn0BhsZ4Gy3g",
+    "CAMPAY_ADMIN_PHONE": "237658788448",
+    "CAMPAY_HOST": "https://demo.campay.net/api",
+    "PORT": "80"
   }
 }
