@@ -40,14 +40,14 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # ================================
-# 6. Copier seulement les fichiers Composer
+# 6. Copier les fichiers Composer uniquement si présents
 # ================================
-COPY composer.json composer.lock ./
+COPY composer.json composer.lock* ./
 
 # ================================
-# 7. Installer les dépendances PHP
+# 7. Installer les dépendances PHP si composer.json existe
 # ================================
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+RUN if [ -f composer.json ]; then composer install --no-interaction --optimize-autoloader --no-dev; fi
 
 # ================================
 # 8. Copier le reste du code Laravel
