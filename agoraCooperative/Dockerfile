@@ -12,9 +12,9 @@ RUN set -eux; \
     apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip unzip git; \
     echo "==> Configuration GD"; \
     docker-php-ext-configure gd --with-freetype --with-jpeg; \
-    echo "==> Installation des extensions GD, PDO, PDO_MYSQL"; \
+    echo "==> Installation GD, PDO, PDO_MYSQL"; \
     docker-php-ext-install gd pdo pdo_mysql; \
-    echo "==> Nettoyage des fichiers temporaires"; \
+    echo "==> Nettoyage"; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
 
@@ -22,7 +22,7 @@ RUN set -eux; \
 # 2. Apache : forcer MPM_PREFORK + rewrite
 # ================================
 RUN set -eux; \
-    echo "==> Configuration Apache: MPM_PREFORK et rewrite"; \
+    echo "==> Configuration Apache: MPM_PREFORK + rewrite"; \
     a2dismod mpm_event mpm_worker mpm_itk || true; \
     a2enmod mpm_prefork rewrite
 
@@ -33,11 +33,11 @@ WORKDIR /var/www/html
 RUN echo "==> Dossier de travail défini à /var/www/html"
 
 # ================================
-# 4. Apache DocumentRoot → /public (Laravel)
+# 4. Apache DocumentRoot → /public
 # ================================
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN set -eux; \
-    echo "==> Mise à jour des configs Apache pour DocumentRoot"; \
+    echo "==> Mise à jour configs Apache"; \
     sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf; \
     sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
@@ -48,20 +48,20 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN echo "==> Composer installé"
 
 # ================================
-# 6. Copier uniquement les fichiers Composer
+# 6. Copier seulement composer.json et composer.lock
 # ================================
-COPY composer.json composer.lock* ./
-RUN echo "==> Fichiers composer.json et composer.lock copiés"
+COPY composer.json composer.lock ./
+RUN echo "==> composer.json et composer.lock copiés"
 
 # ================================
-# 7. Installer les dépendances PHP seulement si composer.json existe
+# 7. Installer les dépendances PHP
 # ================================
 RUN set -eux; \
     if [ -f composer.json ]; then \
         echo "==> Installation des dépendances PHP via Composer"; \
         composer install --no-interaction --optimize-autoloader --no-dev; \
     else \
-        echo "==> Aucun composer.json trouvé, pas d'installation"; \
+        echo "==> Aucun composer.json trouvé"; \
     fi
 
 # ================================
@@ -71,10 +71,10 @@ COPY . .
 RUN echo "==> Tous les fichiers Laravel copiés"
 
 # ================================
-# 9. Créer les dossiers nécessaires à Laravel
+# 9. Créer les dossiers Laravel nécessaires
 # ================================
 RUN set -eux; \
-    echo "==> Création des dossiers de stockage et cache"; \
+    echo "==> Création des dossiers storage et bootstrap/cache"; \
     mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
 
 # ================================
@@ -94,5 +94,5 @@ RUN echo "==> Port 80 exposé"
 # 12. Lancer Apache
 # ================================
 CMD set -eux; \
-    echo "==> Démarrage d'Apache en premier plan"; \
+    echo "==> Démarrage Apache"; \
     apache2-foreground
