@@ -5,7 +5,7 @@
     "context": "."
   },
   "deploy": {
-    "startCommand": "php artisan migrate --force && apache2-foreground",
+    "startCommand": "php artisan config:cache && php artisan route:cache && php artisan migrate --force ; apache2-foreground",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"
