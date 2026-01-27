@@ -14,32 +14,35 @@ RUN apt-get update && apt-get install -y \
 # 2. Activation du module rewrite d'Apache
 RUN a2enmod rewrite
 
-# 3. Définition du dossier de travail (INDISPENSABLE pour trouver composer.json)
+# 3. Dossier de travail
 WORKDIR /var/www/html
 
-# 4. Configuration du DocumentRoot d'Apache
+# 4. Configuration Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 5. Copie des fichiers (Grâce au contexte défini dans railway.json, "." ici est "agoraCooperative")
-COPY . /var/www/html
-
-# 6. Installation de Composer
+# 5. Installation de Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 7. Installation des dépendances avec logs détaillés
-RUN composer install --no-interaction --optimize-autoloader --no-dev --verbose
+# 6. COPIE SPECIFIQUE (Pour éviter l'erreur "file not found")
+# On copie d'abord les fichiers de dépendances
+COPY composer.json composer.lock /var/www/html/
 
-# 8. Configuration des permissions pour Laravel
+# 7. Installation des dépendances
+# On ignore les scripts pour l'instant pour éviter les erreurs de dossiers manquants
+RUN composer install --no-interaction --no-scripts --no-autoloader --no-dev
+
+# 8. Copie du reste du projet
+COPY . /var/www/html
+
+# 9. Finalisation Composer (Génération de l'autoloader)
+RUN composer dump-autoload --optimize --no-dev
+
+# 10. Permissions et Logs
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# 9. Forcer Laravel à envoyer les logs dans la sortie standard de Docker (stderr)
-# Cela permet de voir toutes les erreurs PHP directement dans Railway
 RUN ln -sf /dev/stderr /var/www/html/storage/logs/laravel.log
 
-# 10. Port par défaut
 EXPOSE 80
 
-# 11. Commande de démarrage
 CMD ["apache2-foreground"]
