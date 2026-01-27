@@ -1,0 +1,23 @@
+# Solution temporaire QR Code
+
+Le QR code a été temporairement désactivé dans le PDF car l'extension Imagick n'est pas disponible.
+
+## Code de vérification textuel
+Le PDF contient toujours un code de vérification textuel au format:
+{ID}-{HASH}
+
+Ce code peut être utilisé pour vérifier manuellement l'inscription.
+
+## Solution permanente
+Installer l'extension Imagick pour PHP 7.4:
+
+### Windows
+1. Télécharger la DLL depuis: https://windows.php.net/downloads/pecl/releases/imagick/
+2. Choisir la version compatible avec PHP 7.4 Thread Safe (TS) x64
+3. Extraire php_imagick.dll dans le dossier ext de PHP
+4. Ajouter dans php.ini: extension=imagick
+5. Redémarrer le serveur
+
+### Alternative
+Utiliser un service externe de génération de QR code ou une bibliothèque JavaScript côté frontend.
+

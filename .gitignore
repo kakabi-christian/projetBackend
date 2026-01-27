@@ -1,0 +1,16 @@
+# --- Laravel (agoraCooperative) ---
+agoraCooperative/vendor/
+agoraCooperative/.env
+agoraCooperative/storage/*.key
+agoraCooperative/public/storage
+agoraCooperative/node_modules/
+
+# --- Angular (AgoraFront) ---
+# On cible le dossier profond où se trouve le package.json d'Angular
+AgoraFront/agoraCooperativefrontend/node_modules/
+AgoraFront/agoraCooperativefrontend/.angular/
+AgoraFront/agoraCooperativefrontend/dist/
+
+# --- Divers ---
+.DS_Store
+.env
