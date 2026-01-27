@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "dockerfilePath": "agoraCooperative/Dockerfile",
+    "context": "agoraCooperative"
+  },
+  "deploy": {
+    "startCommand": "php artisan migrate --force && apache2-foreground",
+    "healthcheckPath": "/",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
