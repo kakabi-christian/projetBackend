@@ -26,7 +26,6 @@ bootstrap/cache/*.php
 # NPM / Yarn / Composer caches
 npm-debug.log
 yarn-error.log
-composer.lock
 
 # Other OS or temp files
 *.swp
