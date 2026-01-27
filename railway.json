@@ -5,7 +5,7 @@
     "context": "."
   },
   "deploy": {
-    "startCommand": "apache2-foreground",
+    "startCommand": "php artisan config:clear && php artisan config:cache && php artisan route:cache && apache2-foreground",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"
