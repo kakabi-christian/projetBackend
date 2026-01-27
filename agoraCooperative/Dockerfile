@@ -1,3 +1,6 @@
+# ================================
+# IMAGE DE BASE
+# ================================
 FROM php:8.2-apache
 
 # ================================
@@ -12,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # ================================
-# 2. Apache : forcer MPM_PREFORK
+# 2. Apache : forcer MPM_PREFORK + rewrite
 # ================================
 RUN a2dismod mpm_event mpm_worker mpm_itk || true \
     && a2enmod mpm_prefork rewrite
@@ -37,13 +40,22 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # ================================
-# 6. Copier le code Laravel
+# 6. Copier seulement les fichiers Composer
+# ================================
+COPY composer.json composer.lock ./
+
+# ================================
+# 7. Installer les dépendances PHP
+# ================================
+RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# ================================
+# 8. Copier le reste du code Laravel
 # ================================
 COPY . .
 
 # ================================
-# 7. Créer les dossiers nécessaires à Laravel
-# (IMPORTANT pour éviter les erreurs 500)
+# 9. Créer les dossiers nécessaires à Laravel
 # ================================
 RUN mkdir -p storage/logs \
     storage/framework/cache \
@@ -52,21 +64,16 @@ RUN mkdir -p storage/logs \
     bootstrap/cache
 
 # ================================
-# 8. Installer les dépendances PHP
-# ================================
-RUN composer install --no-interaction --optimize-autoloader --no-dev
-
-# ================================
-# 9. Permissions Laravel
+# 10. Permissions Laravel
 # ================================
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 # ================================
-# 10. Port HTTP
+# 11. Port HTTP
 # ================================
 EXPOSE 80
 
 # ================================
-# 11. Lancer Apache
+# 12. Lancer Apache
 # ================================
 CMD ["apache2-foreground"]
