@@ -17,7 +17,7 @@ RUN a2enmod rewrite
 # 3. Dossier de travail
 WORKDIR /var/www/html
 
-# 4. Configuration Apache
+# 4. Configuration Apache (Fixer le chemin vers /public)
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
@@ -25,21 +25,19 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 # 5. Installation de Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 6. COPIE SPECIFIQUE (Pour éviter l'erreur "file not found")
-# On copie d'abord les fichiers de dépendances
+# 6. Copie spécifique des dépendances (Pour garantir la détection par Docker)
 COPY composer.json composer.lock /var/www/html/
 
-# 7. Installation des dépendances
-# On ignore les scripts pour l'instant pour éviter les erreurs de dossiers manquants
+# 7. Installation des dépendances (Optimisée pour le cloud)
 RUN composer install --no-interaction --no-scripts --no-autoloader --no-dev
 
-# 8. Copie du reste du projet
+# 8. Copie de tout le reste du projet
 COPY . /var/www/html
 
-# 9. Finalisation Composer (Génération de l'autoloader)
+# 9. Finalisation de l'autoloader
 RUN composer dump-autoload --optimize --no-dev
 
-# 10. Permissions et Logs
+# 10. Permissions pour Laravel et Logs vers la console Railway
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN ln -sf /dev/stderr /var/www/html/storage/logs/laravel.log
 
