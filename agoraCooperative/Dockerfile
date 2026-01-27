@@ -32,11 +32,18 @@ RUN ls -la /var/www/html
 # 7. Installation des dépendances PHP
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 8. Permissions et Nettoyage final
+# ... (garde le début inchangé)
+
+# 8. Permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN php artisan config:clear
+
+# 9. Pré-optimisation (On le fait au build pour gagner du temps)
+RUN php artisan config:cache && php artisan route:cache
+
+# Redirection des logs
 RUN ln -sf /dev/stderr /var/www/html/storage/logs/laravel.log
 
 EXPOSE 80
 
+# On lance Apache directement
 CMD ["apache2-foreground"]
