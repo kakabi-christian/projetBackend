@@ -2,12 +2,22 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "dockerfilePath": "agoraCooperative/Dockerfile",
-    "context": "agoraCooperative"
+    "context": "agoraCooperative",
+    "args": {
+      "COMPOSER_ALLOW_SUPERUSER": "1",
+      "APACHE_LOG_LEVEL": "debug"
+    }
   },
   "deploy": {
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE"
+    "restartPolicyType": "ON_FAILURE",
+    "logs": {
+      "enabled": true,
+      "level": "debug",
+      "captureBuildOutput": true,
+      "captureRuntimeOutput": true
+    }
   },
   "env": {
     "APP_NAME": "Agora",
