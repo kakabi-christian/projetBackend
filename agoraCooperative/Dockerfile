@@ -40,12 +40,12 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # ================================
-# 6. Copier les fichiers Composer uniquement si présents
+# 6. Copier uniquement les fichiers Composer si présents
 # ================================
 COPY composer.json composer.lock* ./
 
 # ================================
-# 7. Installer les dépendances PHP si composer.json existe
+# 7. Installer les dépendances PHP seulement si composer.json existe
 # ================================
 RUN if [ -f composer.json ]; then composer install --no-interaction --optimize-autoloader --no-dev; fi
 
