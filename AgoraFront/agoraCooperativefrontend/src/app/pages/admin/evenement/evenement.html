@@ -33,7 +33,7 @@
       <div class="card shadow-sm border-0 overflow-hidden h-100">
         <div class="position-relative">
           <img
-            [src]="e.image_url ? 'http://localhost:8000/' + e.image_url : 'assets/default-event.jpg'"
+            [src]="e.image_url ? (e.image_url.startsWith('http') ? e.image_url : API_CONFIG.storageUrl + '/' + e.image_url) : 'assets/default-event.jpg'"  
             class="card-img-top"
             style="height: 180px; object-fit: cover"
           />

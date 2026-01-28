@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EvenementService } from '../../../services/evenement.service';
 import { Evenement as EvenementModel, EvenementResponse } from '../../../models/evenement.model';
-
+import {API_CONFIG} from "../../../services/api"
 @Component({
   selector: 'app-evenement',
   standalone: true,
@@ -12,6 +12,7 @@ import { Evenement as EvenementModel, EvenementResponse } from '../../../models/
   styleUrl: './evenement.css',
 })
 export class Evenement implements OnInit {
+  protected readonly API_CONFIG = API_CONFIG;
   evenements: EvenementModel[] = [];
   eventForm: FormGroup;
   
@@ -136,7 +137,10 @@ export class Evenement implements OnInit {
     });
 
     if (event.image_url) {
-      this.imagePreview = `http://localhost:8000/${event.image_url}`;
+      // Si l'image_url contient déjà "http", on l'utilise, sinon on préfixe
+      this.imagePreview = event.image_url.startsWith('http') 
+        ? event.image_url 
+        : `${API_CONFIG.storageUrl}/${event.image_url}`;
     }
   }
 
