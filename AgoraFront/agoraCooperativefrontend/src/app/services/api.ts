@@ -7,9 +7,9 @@ export const API_CONFIG = {
   // Si c'est localhost, on utilise le port 8000, sinon on utilise Railway
   baseUrl: isLocalhost 
     ? 'http://localhost:8000/api' 
-    : 'https://sweet-joy-production.up.railway.app/api',
+    : 'https://agorapp.up.railway.app/api',
 
   storageUrl: isLocalhost 
     ? 'http://localhost:8000/storage' 
-    : 'https://sweet-joy-production.up.railway.app/storage',
+    : 'https://agorapp.up.railway.app/storage',
 };
