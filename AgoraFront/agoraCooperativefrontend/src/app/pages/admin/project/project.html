@@ -75,18 +75,13 @@
             style="height: 180px; object-fit: cover"
           /> -->
           <img
-            [src]="
-              p.image_url
-                ? p.image_url.includes('localhost')
-                  ? API_CONFIG.storageUrl + '/' + p.image_url.split('storage/')[1]
-                  : p.image_url.startsWith('http')
-                    ? p.image_url
-                    : API_CONFIG.storageUrl + '/' + p.image_url
-                : 'assets/default-project.jpg'
-            "
-            class="card-img-top"
-            style="height: 180px; object-fit: cover"
-          />
+  [src]="p.image_url ? 
+          (p.image_url.startsWith('http') ? p.image_url : API_CONFIG.storageUrl + '/' + p.image_url) 
+          : 'assets/default-project.jpg'"
+  class="card-img-top"
+  style="height: 180px; object-fit: cover"
+  (error)="$any($event.target).src = 'assets/default-project.jpg'"
+/>
 
           <!-- Badge statut -->
           <div class="position-absolute top-0 end-0 p-2">
