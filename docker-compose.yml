@@ -1,0 +1,44 @@
+services:
+  # 1. Base de données MySQL
+  db:
+    image: mysql:8.0
+    container_name: agora-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: cooperative_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - agora_db_data:/var/lib/mysql
+
+  # 2. Backend Laravel
+  backend:
+    build: 
+      context: ./agoraCooperative
+      dockerfile: Dockerfile
+    container_name: agora-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=cooperative_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+
+  # 3. Frontend Angular
+  frontend:
+    build: 
+      context: ./AgoraFront/agoraCooperativefrontend
+      dockerfile: Dockerfile
+    container_name: agora-ui
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  agora_db_data:

@@ -1,98 +1,36 @@
-# ================================
-# IMAGE DE BASE
-# ================================
-FROM php:8.2-apache
+# 1. Image de base : PHP avec extensions nécessaires pour Laravel
+FROM php:8.2-fpm-alpine
 
-# ================================
-# 1. Dépendances système + extensions PHP
-# ================================
-RUN set -eux; \
-    echo "==> Mise à jour des paquets et installation des extensions PHP"; \
-    apt-get update; \
-    apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip unzip git; \
-    echo "==> Configuration GD"; \
-    docker-php-ext-configure gd --with-freetype --with-jpeg; \
-    echo "==> Installation GD, PDO, PDO_MYSQL"; \
-    docker-php-ext-install gd pdo pdo_mysql; \
-    echo "==> Nettoyage"; \
-    apt-get clean; \
-    rm -rf /var/lib/apt/lists/*
+# 2. Installation des dépendances système et extensions PHP
+RUN apk add --no-cache \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    zip \
+    libzip-dev \
+    unzip \
+    oniguruma-dev \
+    $PHPIZE_DEPS
 
-# ================================
-# 2. Apache : forcer MPM_PREFORK + rewrite
-# ================================
-RUN set -eux; \
-    echo "==> Configuration Apache: MPM_PREFORK + rewrite"; \
-    a2dismod mpm_event mpm_worker mpm_itk || true; \
-    a2enmod mpm_prefork rewrite
+RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# ================================
-# 3. Dossier de travail
-# ================================
-WORKDIR /var/www/html
-RUN echo "==> Dossier de travail défini à /var/www/html"
-
-# ================================
-# 4. Apache DocumentRoot → /public
-# ================================
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN set -eux; \
-    echo "==> Mise à jour configs Apache"; \
-    sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf; \
-    sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# ================================
-# 5. Installer Composer
-# ================================
+# 3. Installation de Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN echo "==> Composer installé"
 
-# ================================
-# 6. Copier seulement composer.json et composer.lock
-# ================================
-COPY composer.json composer.lock ./
-RUN echo "==> composer.json et composer.lock copiés"
+# 4. Dossier de travail
+WORKDIR /var/www
 
-# ================================
-# 7. Installer les dépendances PHP
-# ================================
-RUN set -eux; \
-    if [ -f composer.json ]; then \
-        echo "==> Installation des dépendances PHP via Composer"; \
-        composer install --no-interaction --optimize-autoloader --no-dev; \
-    else \
-        echo "==> Aucun composer.json trouvé"; \
-    fi
-
-# ================================
-# 8. Copier le reste du code Laravel
-# ================================
+# 5. Copie du code
 COPY . .
-RUN echo "==> Tous les fichiers Laravel copiés"
 
-# ================================
-# 9. Créer les dossiers Laravel nécessaires
-# ================================
-RUN set -eux; \
-    echo "==> Création des dossiers storage et bootstrap/cache"; \
-    mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+# 6. Installation des dépendances Laravel
+RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# ================================
-# 10. Permissions Laravel
-# ================================
-RUN set -eux; \
-    echo "==> Définition des permissions"; \
-    chown -R www-data:www-data storage bootstrap/cache
+# 7. Permissions pour Laravel
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# ================================
-# 11. Port HTTP
-# ================================
-EXPOSE 80
-RUN echo "==> Port 80 exposé"
+# 8. Exposition du port (Railway utilise souvent 8080 ou 80)
+EXPOSE 8000
 
-# ================================
-# 12. Lancer Apache
-# ================================
-CMD set -eux; \
-    echo "==> Démarrage Apache"; \
-    apache2-foreground
+# 9. Commande de lancement (On utilise le serveur intégré pour simplifier sur Railway)
+CMD php artisan serve --host=0.0.0.0 --port=8000
