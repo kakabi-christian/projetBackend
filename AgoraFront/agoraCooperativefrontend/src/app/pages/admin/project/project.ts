@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProjetService } from '../../../services/projet.service';
 import { Projet } from '../../../models/projet.model';
-
+import { API_CONFIG } from '../../../services/api';
 @Component({
   selector: 'app-project',
   standalone: true,
@@ -12,6 +12,7 @@ import { Projet } from '../../../models/projet.model';
   styleUrl: './project.css',
 })
 export class Project implements OnInit {
+  public readonly API_CONFIG = API_CONFIG;
   projets: Projet[] = [];
   paginationMeta: any = null;
   loading: boolean = true;

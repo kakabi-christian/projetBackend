@@ -69,11 +69,11 @@
       <div class="card shadow-sm border-0 overflow-hidden">
         <div class="position-relative" *ngIf="p.image_url">
           <!-- Image -->
-          <img
-            [src]="'http://localhost:8000/' + p.image_url"
-            class="card-img-top"
-            style="height: 180px; object-fit: cover"
-          />
+            <img 
+              [src]="p.image_url ? (p.image_url.startsWith('http') ? p.image_url : API_CONFIG.storageUrl + '/' + p.image_url) : 'assets/default-project.jpg'" 
+              class="card-img-top" 
+              style="height: 180px; object-fit: cover" 
+            />
 
           <!-- Badge statut -->
           <div class="position-absolute top-0 end-0 p-2">
