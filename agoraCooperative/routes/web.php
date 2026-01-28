@@ -11,21 +11,39 @@ Route::get('/', function () {
     ], 200);
 });
 
+// ROUTE POUR CRÉER LE LIEN SYMBOLIQUE DU STORAGE
+Route::get('/force-link', function () {
+    try {
+        Artisan::call('storage:link');
+        return response()->json([
+            'status' => 'Success',
+            'message' => 'Le lien symbolique storage a été créé !',
+            'details' => Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'Error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
 // ROUTE TEMPORAIRE POUR LANCER LES MIGRATIONS SUR RAILWAY
 Route::get('/force-migrate', function () {
-    // Augmente le temps d'exécution à 5 minutes pour éviter le timeout
     set_time_limit(300); 
 
     try {
-        // Force la création des tables et l'insertion des données de test
         Artisan::call('migrate:fresh', [
             '--force' => true, 
             '--seed' => true
         ]);
         
+        // Optionnel : On peut aussi appeler le storage link ici automatiquement
+        Artisan::call('storage:link');
+
         return response()->json([
             'status' => 'Success', 
-            'message' => 'Base de données migrée et remplie avec succès !',
+            'message' => 'Base de données migrée et lien storage créé !',
             'details' => Artisan::output()
         ]);
     } catch (\Exception $e) {
