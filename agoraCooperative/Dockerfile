@@ -30,7 +30,7 @@ RUN composer install --no-interaction --optimize-autoloader --no-dev
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 # 8. Exposition du port (Railway utilise souvent 8080 ou 80)
-EXPOSE 8000
+EXPOSE 80
 
-# 9. Commande de lancement (On utilise le serveur intégré pour simplifier sur Railway)
-CMD php artisan serve --host=0.0.0.0 --port=8000
+# 9. Commande de lancement dynamique
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-80}
