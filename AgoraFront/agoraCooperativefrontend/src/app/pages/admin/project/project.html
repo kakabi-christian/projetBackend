@@ -69,11 +69,24 @@
       <div class="card shadow-sm border-0 overflow-hidden">
         <div class="position-relative" *ngIf="p.image_url">
           <!-- Image -->
-            <img 
-              [src]="p.image_url ? (p.image_url.startsWith('http') ? p.image_url : API_CONFIG.storageUrl + '/' + p.image_url) : 'assets/default-project.jpg'" 
-              class="card-img-top" 
-              style="height: 180px; object-fit: cover" 
-            />
+          <!-- <img
+            [src]="'http://localhost:8000/' + p.image_url"
+            class="card-img-top"
+            style="height: 180px; object-fit: cover"
+          /> -->
+          <img
+            [src]="
+              p.image_url
+                ? p.image_url.includes('localhost')
+                  ? API_CONFIG.storageUrl + '/' + p.image_url.split('storage/')[1]
+                  : p.image_url.startsWith('http')
+                    ? p.image_url
+                    : API_CONFIG.storageUrl + '/' + p.image_url
+                : 'assets/default-project.jpg'
+            "
+            class="card-img-top"
+            style="height: 180px; object-fit: cover"
+          />
 
           <!-- Badge statut -->
           <div class="position-absolute top-0 end-0 p-2">
@@ -83,7 +96,7 @@
                 'bg-warning text-dark': p.statut === 'propose' || p.statut === 'en_etude',
                 'bg-info text-white': p.statut === 'en_cours',
                 'bg-success': p.statut === 'termine',
-                'bg-danger': p.statut === 'annule'
+                'bg-danger': p.statut === 'annule',
               }"
             >
               {{ p.statut | titlecase }}
@@ -95,11 +108,11 @@
             <div class="d-flex justify-content-between small">
               <span>
                 <strong>Date début :</strong>
-                {{ p.date_debut | date : 'dd/MM/yyyy' }}
+                {{ p.date_debut | date: 'dd/MM/yyyy' }}
               </span>
               <span>
                 <strong>Date fin :</strong>
-                {{ p.date_fin_prevue | date : 'dd/MM/yyyy' }}
+                {{ p.date_fin_prevue | date: 'dd/MM/yyyy' }}
               </span>
             </div>
           </div>
@@ -111,7 +124,7 @@
               p.type | uppercase
             }}</span>
             <small class="text-muted" *ngIf="p.date_debut">{{
-              p.date_debut | date : 'dd/MM/yyyy'
+              p.date_debut | date: 'dd/MM/yyyy'
             }}</small>
 
             <span
@@ -120,7 +133,7 @@
               [ngClass]="{
                 'border-warning': p.statut === 'propose',
                 'border-info': p.statut === 'en_cours',
-                'border-success': p.statut === 'termine'
+                'border-success': p.statut === 'termine',
               }"
             >
               {{ p.statut | titlecase }}
@@ -133,14 +146,14 @@
           </p>
 
           <p class="card-text small text-muted mb-3">
-            {{ p.description | slice : 0 : 100
+            {{ p.description | slice: 0 : 100
             }}{{ (p.description?.length ?? 0) > 100 ? '...' : '' }}
           </p>
 
           <div class="mb-3" *ngIf="p.objectifs && p.objectifs.length > 0">
             <div class="d-flex flex-wrap gap-1">
               <span
-                *ngFor="let obj of p.objectifs | slice : 0 : 2"
+                *ngFor="let obj of p.objectifs | slice: 0 : 2"
                 class="badge bg-light text-muted border-0 fw-normal"
                 style="font-size: 0.7rem"
               >
