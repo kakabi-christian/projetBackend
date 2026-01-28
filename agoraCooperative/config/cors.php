@@ -9,9 +9,10 @@ return [
         'http://localhost:4200',
         'http://127.0.0.1:4200',
         'https://32db490e1a8e.ngrok-free.app',
+        'https://agorafront.up.railway.app', // <-- Ajout de ton URL Railway
     ],
 
-    'allowed_origins_patterns' => ['#^https://.*\.ngrok-free\.app$#'],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
