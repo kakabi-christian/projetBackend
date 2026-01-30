@@ -47,27 +47,39 @@ export class Project implements OnInit {
     };
   }
 
-  // NOUVELLE MÉTHODE : Diagnostic des erreurs d'images
+  /**
+   * Gestionnaire d'erreur pour les images.
+   * Si l'image cloud échoue, on bascule sur l'image locale par défaut.
+   */
   handleImageError(event: any, projet: Projet) {
-    const urlQuiEchoue = (event.target as HTMLImageElement).src;
-    console.group(`Erreur d'affichage image : ${projet.nom}`);
-    console.error(`URL tentée : ${urlQuiEchoue}`);
-    console.warn(`Valeur exacte en base de données : ${projet.image_url}`);
-    console.log(`Base URL Storage configurée : ${this.API_CONFIG.storageUrl}`);
+    const imgElement = event.target as HTMLImageElement;
+    const defaultImg = 'assets/default-project.jpg';
+
+    // Empêche une boucle infinie si l'image par défaut est elle aussi manquante
+    if (imgElement.src.includes(defaultImg)) {
+      return;
+    }
+
+    console.group(`Diagnostic Image : ${projet.nom}`);
+    console.warn(`URL échouée : ${imgElement.src}`);
+    console.log(`Valeur DB : ${projet.image_url}`);
+    console.log(`Base URL : ${this.API_CONFIG.storageUrl}`);
     console.groupEnd();
 
-    // Remplacement par l'image par défaut locale
-    (event.target as HTMLImageElement).src = 'assets/default-project.jpg';
+    imgElement.src = defaultImg;
   }
 
   chargerProjets(page: number = 1) {
     this.loading = true;
     this.projetService.getProjets(page).subscribe({
       next: (res) => {
-        let data = res.projets.data;
+        // Extraction sécurisée des données selon la structure de pagination Laravel
+        let data = res.projets?.data || [];
+        
         if (this.currentStatut) {
           data = data.filter((p: Projet) => p.statut === this.currentStatut);
         }
+        
         this.projets = data;
         this.paginationMeta = res.projets;
         this.loading = false;
@@ -124,16 +136,14 @@ export class Project implements OnInit {
 
     Object.keys(this.currentProjet).forEach(key => {
       const value = this.currentProjet[key];
+      
       if (key === 'objectifs' && Array.isArray(value)) {
         value.forEach((item: string) => formData.append('objectifs[]', item));
       }
       else if (key === 'est_public') {
         formData.append('est_public', value ? '1' : '0');
       }
-      else if (value === '' || value === null || value === undefined) {
-        // Laisser vide pour le backend
-      }
-      else if (key !== 'image_url') {
+      else if (value !== null && value !== undefined && value !== '' && key !== 'image_url') {
         formData.append(key, value);
       }
     });
@@ -165,7 +175,7 @@ export class Project implements OnInit {
   supprimer(id: number) {
     if (confirm('Voulez-vous vraiment supprimer ce projet ?')) {
       this.projetService.deleteProjet(id).subscribe({
-        next: () => this.chargerProjets(this.paginationMeta?.current_page),
+        next: () => this.chargerProjets(this.paginationMeta?.current_page || 1),
         error: (err) => console.error('Erreur suppression:', err)
       });
     }
