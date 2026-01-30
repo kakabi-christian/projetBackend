@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PartenaireService } from '../../../services/partenaire.service';
-import { AuthService } from '../../../services/auth.service'; // Importation indispensable
+import { AuthService } from '../../../services/auth.service';
 import { Partenaire } from '../../../models/partenaire.model';
+import { API_CONFIG } from '../../../services/api'; // Import centralisé
 
 @Component({
   selector: 'app-partenaire',
@@ -13,6 +14,7 @@ import { Partenaire } from '../../../models/partenaire.model';
   styleUrl: './partenaire.css',
 })
 export class Partners implements OnInit {
+  public readonly API_CONFIG = API_CONFIG; // On rend API_CONFIG accessible au HTML
   partenaires: Partenaire[] = [];
   paginationMeta: any = null;
   loading: boolean = true;
@@ -22,7 +24,6 @@ export class Partners implements OnInit {
   showModal: boolean = false;
   isEditMode: boolean = false;
   selectedFile: File | null = null;
-  storageUrl = 'http://127.0.0.1:8000/'; // Base URL pour les images
   
   // Variable pour le filtrage
   currentStatut: string = ''; 
@@ -32,7 +33,7 @@ export class Partners implements OnInit {
 
   constructor(
     private partenaireService: PartenaireService,
-    private authService: AuthService // Injection du service Auth
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -41,24 +42,31 @@ export class Partners implements OnInit {
   }
 
   /**
-   * Correction : Récupère le rôle via le AuthService (user_data)
-   * et non plus en décodant le token Sanctum
+   * Diagnostic des erreurs d'images pour les logos partenaires
    */
+  handleImageError(event: any, partenaire: Partenaire) {
+    const imgElement = event.target as HTMLImageElement;
+    const defaultImg = 'assets/default-partner.jpg'; // Assure-toi d'avoir cette image en local
+
+    if (imgElement.src.includes(defaultImg)) return;
+
+    console.group(`Erreur Logo Partenaire : ${partenaire.nom}`);
+    console.warn(`URL échouée : ${imgElement.src}`);
+    console.log(`Base URL utilisée : ${this.API_CONFIG.storageUrl}`);
+    console.groupEnd();
+
+    imgElement.src = defaultImg;
+  }
+
   extractUserRole() {
     this.userRole = this.authService.getUserRole();
     console.log('Rôle détecté dans le composant Partenaire :', this.userRole);
   }
 
-  /**
-   * Utilisé dans le HTML pour afficher/cacher les boutons
-   */
   isAdmin(): boolean {
     return this.authService.isAdmin();
   }
 
-  /**
-   * Initialise un objet partenaire vide
-   */
   initPartenaire() {
     return {
       nom: '',
@@ -74,22 +82,20 @@ export class Partners implements OnInit {
     };
   }
 
-  /**
-   * Charge les partenaires depuis l'API
-   */
   chargerPartenaires(page: number = 1) {
     this.loading = true;
     this.partenaireService.getPartenaires(page).subscribe({
       next: (res) => {
-        // Filtrage local si un niveau (principal/secondaire) est sélectionné
+        // Extraction sécurisée des données
+        let data = res.partenaires?.data || [];
+        
         if (this.currentStatut) {
-          this.partenaires = res.partenaires.data.filter(
+          data = data.filter(
             (p: any) => p.niveau_partenariat === this.currentStatut
           );
-        } else {
-          this.partenaires = res.partenaires.data;
         }
         
+        this.partenaires = data;
         this.paginationMeta = res.partenaires;
         this.loading = false;
       },
@@ -100,9 +106,6 @@ export class Partners implements OnInit {
     });
   }
 
-  /**
-   * Gère l'ouverture de la modal (Ajout ou Modification)
-   */
   ouvrirModal(partenaire?: Partenaire) {
     this.selectedFile = null;
     if (partenaire) {
@@ -115,9 +118,6 @@ export class Partners implements OnInit {
     this.showModal = true;
   }
 
-  /**
-   * Capture du fichier lors de l'upload
-   */
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -125,9 +125,6 @@ export class Partners implements OnInit {
     }
   }
 
-  /**
-   * Enregistre les données via FormData (pour gérer le fichier image)
-   */
   enregistrer() {
     const formData = new FormData();
     
@@ -136,7 +133,9 @@ export class Partners implements OnInit {
       
       if (key === 'est_actif') {
         formData.append('est_actif', value ? '1' : '0');
-      } else if (value !== null && value !== undefined && key !== 'logo_url' && key !== 'code_partenaire') {
+      } 
+      // On n'envoie pas les URLs de la DB ni les champs vides
+      else if (value !== null && value !== undefined && value !== '' && key !== 'logo_url' && key !== 'code_partenaire') {
         formData.append(key, value);
       }
     });
@@ -153,17 +152,19 @@ export class Partners implements OnInit {
       next: () => {
         this.showModal = false;
         this.chargerPartenaires(this.paginationMeta?.current_page || 1);
+        this.selectedFile = null;
       },
       error: (err) => {
         console.error('Erreur lors de l\'enregistrement', err);
-        alert('Une erreur est survenue lors de l\'enregistrement.');
+        if (err.status === 422) {
+           alert('Erreur de validation: ' + JSON.stringify(err.error.errors));
+        } else {
+           alert('Une erreur est survenue lors de l\'enregistrement.');
+        }
       }
     });
   }
 
-  /**
-   * Supprime un partenaire après confirmation
-   */
   supprimer(code: string) {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce partenaire ?')) {
       this.partenaireService.deletePartenaire(code).subscribe({
@@ -175,11 +176,8 @@ export class Partners implements OnInit {
     }
   }
 
-  /**
-   * Navigation de pagination
-   */
   allerAPage(page: number) {
-    if (page >= 1 && page <= this.paginationMeta.last_page) {
+    if (this.paginationMeta && page >= 1 && page <= this.paginationMeta.last_page) {
       this.chargerPartenaires(page);
     }
   }

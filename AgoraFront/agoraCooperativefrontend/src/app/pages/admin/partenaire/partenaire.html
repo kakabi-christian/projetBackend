@@ -15,9 +15,15 @@
   </div>
 
   <div class="btn-group mb-4 shadow-sm bg-white p-1 rounded border">
-    <button type="button" class="btn btn-sm px-3" [ngClass]="currentStatut === '' ? 'btn-primary text-white' : 'btn-white'" (click)="chargerPartenaires(1)">Tous</button>
-    <button type="button" class="btn btn-sm px-3" [ngClass]="currentStatut === 'principal' ? 'btn-primary text-white' : 'btn-white'" (click)="currentStatut = 'principal'; chargerPartenaires(1)">Principaux</button>
-    <button type="button" class="btn btn-sm px-3" [ngClass]="currentStatut === 'secondaire' ? 'btn-primary text-white' : 'btn-white'" (click)="currentStatut = 'secondaire'; chargerPartenaires(1)">Secondaires</button>
+    <button type="button" class="btn btn-sm px-4" 
+      [ngClass]="currentStatut === '' ? 'btn-primary text-white' : 'btn-white'" 
+      (click)="currentStatut = ''; chargerPartenaires(1)">Tous</button>
+    <button type="button" class="btn btn-sm px-4" 
+      [ngClass]="currentStatut === 'principal' ? 'btn-primary text-white' : 'btn-white'" 
+      (click)="currentStatut = 'principal'; chargerPartenaires(1)">Principaux</button>
+    <button type="button" class="btn btn-sm px-4" 
+      [ngClass]="currentStatut === 'secondaire' ? 'btn-primary text-white' : 'btn-white'" 
+      (click)="currentStatut = 'secondaire'; chargerPartenaires(1)">Secondaires</button>
   </div>
 
   <div *ngIf="loading" class="text-center py-5">
@@ -27,60 +33,71 @@
 
   <div class="row g-4" *ngIf="!loading && partenaires.length > 0">
     <div class="col-12 col-md-6 col-lg-4" *ngFor="let p of partenaires">
-      <div class="card h-100 shadow-sm border-0 position-relative overflow-hidden">
+      <div class="card h-100 shadow-sm border-0 position-relative overflow-hidden partner-card">
         
-        <div class="position-absolute top-0 end-0 p-2">
-          <span class="badge shadow-sm" [ngClass]="p.est_actif ? 'bg-success' : 'bg-secondary'">
+        <div class="position-absolute top-0 end-0 p-2" style="z-index: 2;">
+          <span class="badge shadow-sm px-3" [ngClass]="p.est_actif ? 'bg-success' : 'bg-secondary'">
             {{ p.est_actif ? 'Actif' : 'Inactif' }}
           </span>
         </div>
 
         <div class="card-body pt-4">
           <div class="text-center mb-4">
-            <div class="p-2 border rounded-4 bg-light d-inline-flex align-items-center justify-content-center shadow-sm" 
-                 style="width: 100%; max-width: 220px; height: 140px; overflow: hidden; background-color: #fff;">
-                <img *ngIf="p.logo_url" [src]="storageUrl + p.logo_url" 
+            <div class="p-3 border rounded-4 bg-white d-inline-flex align-items-center justify-content-center shadow-sm" 
+                 style="width: 100%; max-width: 240px; height: 160px; overflow: hidden;">
+                
+                <img [src]="p.logo_url ? (p.logo_url.startsWith('http') ? p.logo_url : API_CONFIG.storageUrl + '/' + p.logo_url) : 'assets/default-partner.jpg'" 
                      class="img-fluid" 
-                     style="max-height: 100%; width: auto; object-fit: contain;">
-                <div *ngIf="!p.logo_url" class="h-100 d-flex flex-column align-items-center justify-content-center text-muted">
-                  <i class="bi bi-image fs-1 opacity-25"></i>
-                  <span class="small fw-bold">LOGO</span>
-                </div>
+                     style="max-height: 100%; width: auto; object-fit: contain;"
+                     (error)="handleImageError($event, p)"
+                     alt="Logo {{ p.nom }}">
             </div>
           </div>
 
           <h5 class="card-title fw-bold text-dark text-center mb-1">{{ p.nom }}</h5>
           <div class="text-center mb-3">
-            <span class="badge bg-light text-primary border-primary border px-3">{{ p.type | uppercase }}</span>
+            <span class="badge bg-light text-primary border-primary border px-3 text-uppercase" style="font-size: 0.7rem;">
+              {{ p.type }}
+            </span>
           </div>
 
-          <div class="small text-muted mb-3">
-            <div class="mb-1"><i class="bi bi-person-badge me-2 text-success"></i><strong>Contact:</strong> {{ p.contact_nom || 'N/A' }}</div>
-            <div class="mb-1"><i class="bi bi-telephone me-2 text-success"></i>{{ p.contact_telephone || 'Non renseigné' }}</div>
-            <div class="mb-1"><i class="bi bi-globe me-2 text-success"></i><a [href]="p.site_web" target="_blank" class="text-decoration-none text-muted">{{ p.site_web || 'Pas de site' }}</a></div>
+          <div class="small text-muted mb-3 bg-light p-3 rounded-3">
+            <div class="mb-1 text-truncate">
+              <i class="bi bi-person-badge me-2 text-primary"></i><strong>Contact:</strong> {{ p.contact_nom || 'N/A' }}
+            </div>
+            <div class="mb-1">
+              <i class="bi bi-telephone me-2 text-primary"></i>{{ p.contact_telephone || 'Non renseigné' }}
+            </div>
+            <div class="mb-1 text-truncate">
+              <i class="bi bi-globe me-2 text-primary"></i>
+              <a *ngIf="p.site_web" [href]="p.site_web" target="_blank" class="text-decoration-none text-primary fw-bold">Visiter le site</a>
+              <span *ngIf="!p.site_web">Pas de site web</span>
+            </div>
           </div>
           
-          <div class="p-3 bg-light rounded mb-3 border-start border-3 border-primary">
-            <label class="fw-bold small text-uppercase text-secondary d-block mb-1">Description :</label>
-            <p class="card-text small mb-0">{{ p.description | slice:0:100 }}{{ (p.description?.length ?? 0) > 100 ? '...' : '' }}</p>
+          <div class="mb-3">
+            <label class="fw-bold small text-uppercase text-secondary d-block mb-1" style="font-size: 0.65rem;">À propos :</label>
+            <p class="card-text small text-dark mb-0">
+              {{ p.description | slice:0:110 }}{{ (p.description?.length ?? 0) > 110 ? '...' : '' }}
+            </p>
           </div>
 
-          <div class="d-flex justify-content-between align-items-center border-top pt-2">
-            <span class="small fw-bold text-uppercase text-muted" style="font-size: 0.7rem;">Niveau: {{ p.niveau_partenariat }}</span>
-            <span class="small text-muted">Ordre: <strong>#{{ p.ordre_affichage }}</strong></span>
+          <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-auto">
+            <span class="badge bg-soft-primary text-primary" style="font-size: 0.7rem;">NIVEAU: {{ p.niveau_partenariat | uppercase }}</span>
+            <span class="small text-muted">Position: <strong>#{{ p.ordre_affichage }}</strong></span>
           </div>
         </div>
 
         <div class="card-footer bg-white border-top-0 p-3" *ngIf="isAdmin()">
           <div class="row g-2">
             <div class="col-6">
-              <button class="btn btn-outline-primary btn-sm w-100 py-2" (click)="ouvrirModal(p)">
-                <i class="bi bi-pencil me-1"></i> Modifier
+              <button class="btn btn-outline-primary btn-sm w-100 py-2 rounded-3" (click)="ouvrirModal(p)">
+                <i class="bi bi-pencil-square me-1"></i> Modifier
               </button>
             </div>
             <div class="col-6">
-              <button class="btn btn-outline-danger btn-sm w-100 py-2" (click)="supprimer(p.code_partenaire!)">
-                <i class="bi bi-trash me-1"></i> Supprimer
+              <button class="btn btn-danger btn-sm w-100 py-2 text-white shadow-sm rounded-3" (click)="supprimer(p.code_partenaire!)">
+                <i class="bi bi-trash3 me-1"></i> Supprimer
               </button>
             </div>
           </div>
@@ -89,12 +106,13 @@
     </div>
   </div>
 
-  <div class="modal fade show" tabindex="-1" *ngIf="showModal" style="display: block; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+  <div class="modal fade show" tabindex="-1" *ngIf="showModal" style="display: block; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content shadow border-0 rounded-4">
-        <div class="modal-header bg-dark text-white rounded-top-4">
+      <div class="modal-content shadow-lg border-0 rounded-4">
+        <div class="modal-header bg-primary text-white rounded-top-4 py-3">
           <h5 class="modal-title fw-bold">
-            {{ isEditMode ? 'Modifier le Partenaire' : 'Nouveau Partenaire' }}
+            <i class="bi" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-building-plus'"></i>
+            {{ isEditMode ? 'Mise à jour Partenaire' : 'Nouveau Partenaire Stratégique' }}
           </h5>
           <button type="button" class="btn-close btn-close-white" (click)="showModal = false"></button>
         </div>
@@ -104,11 +122,11 @@
             <div class="row g-3">
               <div class="col-md-7">
                 <label class="form-label fw-bold small">Nom de l'organisation *</label>
-                <input type="text" class="form-control" [(ngModel)]="currentPartenaire.nom" name="nom" required>
+                <input type="text" class="form-control shadow-none" [(ngModel)]="currentPartenaire.nom" name="nom" required placeholder="Ex: Fondation AGORA">
               </div>
               <div class="col-md-5">
-                <label class="form-label fw-bold small">Type</label>
-                <select class="form-select" [(ngModel)]="currentPartenaire.type" name="type">
+                <label class="form-label fw-bold small">Type de partenariat</label>
+                <select class="form-select shadow-none" [(ngModel)]="currentPartenaire.type" name="type">
                   <option value="sponsor">Sponsor</option>
                   <option value="donateur">Donateur</option>
                   <option value="institutionnel">Institutionnel</option>
@@ -117,57 +135,62 @@
               </div>
 
               <div class="col-12">
-                <label class="form-label fw-bold small">Description courte</label>
-                <textarea class="form-control" rows="2" [(ngModel)]="currentPartenaire.description" name="description"></textarea>
+                <label class="form-label fw-bold small">Description ou Mission</label>
+                <textarea class="form-control shadow-none" rows="2" [(ngModel)]="currentPartenaire.description" name="description" placeholder="Bref résumé des activités..."></textarea>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-bold small">Site Web (URL)</label>
-                <input type="url" class="form-control" [(ngModel)]="currentPartenaire.site_web" name="site_web" placeholder="https://...">
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-link-45deg"></i></span>
+                  <input type="url" class="form-control shadow-none" [(ngModel)]="currentPartenaire.site_web" name="site_web" placeholder="https://www.exemple.com">
+                </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold small">Nom du Contact</label>
-                <input type="text" class="form-control" [(ngModel)]="currentPartenaire.contact_nom" name="contact_nom">
+                <label class="form-label fw-bold small">Nom du Point de Contact</label>
+                <input type="text" class="form-control shadow-none" [(ngModel)]="currentPartenaire.contact_nom" name="contact_nom">
               </div>
 
               <div class="col-md-6">
-                <label class="form-label fw-bold small">Email Contact</label>
-                <input type="email" class="form-control" [(ngModel)]="currentPartenaire.contact_email" name="contact_email">
+                <label class="form-label fw-bold small">Email de Contact</label>
+                <input type="email" class="form-control shadow-none" [(ngModel)]="currentPartenaire.contact_email" name="contact_email">
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold small">Téléphone</label>
-                <input type="text" class="form-control" [(ngModel)]="currentPartenaire.contact_telephone" name="contact_telephone">
+                <label class="form-label fw-bold small">Téléphone Pro</label>
+                <input type="text" class="form-control shadow-none" [(ngModel)]="currentPartenaire.contact_telephone" name="contact_telephone">
               </div>
 
               <div class="col-md-4">
                 <label class="form-label fw-bold small">Niveau d'importance</label>
-                <select class="form-select" [(ngModel)]="currentPartenaire.niveau_partenariat" name="niveau">
-                  <option value="principal">Principal</option>
-                  <option value="secondaire">Secondaire</option>
+                <select class="form-select shadow-none border-primary" [(ngModel)]="currentPartenaire.niveau_partenariat" name="niveau">
+                  <option value="principal">Principal (Premium)</option>
+                  <option value="secondaire">Secondaire (Standard)</option>
                 </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-bold small">Ordre d'affichage</label>
-                <input type="number" class="form-control" [(ngModel)]="currentPartenaire.ordre_affichage" name="ordre">
+                <input type="number" class="form-control shadow-none" [(ngModel)]="currentPartenaire.ordre_affichage" name="ordre">
               </div>
-              <div class="col-md-4 d-flex align-items-end pb-2">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" [(ngModel)]="currentPartenaire.est_actif" name="actif" id="pActif">
+              <div class="col-md-4 d-flex align-items-center">
+                <div class="form-check form-switch mt-3 p-3 bg-light rounded border w-100">
+                  <input class="form-check-input ms-0 me-2" type="checkbox" [(ngModel)]="currentPartenaire.est_actif" name="actif" id="pActif">
                   <label class="form-check-label fw-bold small" for="pActif">Partenaire Actif</label>
                 </div>
               </div>
 
               <div class="col-12">
-                <label class="form-label fw-bold small">Logo de l'entreprise</label>
-                <input type="file" class="form-control" (change)="onFileSelected($event)">
-                <small class="text-muted" *ngIf="isEditMode">Laissez vide pour conserver le logo actuel</small>
+                <label class="form-label fw-bold small">Importer le Logo</label>
+                <input type="file" class="form-control shadow-none" (change)="onFileSelected($event)" accept="image/*">
+                <small class="text-muted d-block mt-1" *ngIf="isEditMode">
+                  <i class="bi bi-info-circle me-1"></i>Laissez vide pour conserver le logo actuel
+                </small>
               </div>
             </div>
 
             <div class="modal-footer px-0 pb-0 pt-4 border-top-0">
-              <button type="button" class="btn btn-light px-4" (click)="showModal = false">Annuler</button>
-              <button type="submit" class="btn btn-success px-5 shadow-sm">
-                {{ isEditMode ? 'Mettre à jour' : 'Créer le Partenaire' }}
+              <button type="button" class="btn btn-light px-4 py-2" (click)="showModal = false">Annuler</button>
+              <button type="submit" class="btn btn-primary px-5 py-2 shadow-sm fw-bold">
+                {{ isEditMode ? 'Enregistrer les modifications' : 'Confirmer le Partenariat' }}
               </button>
             </div>
           </form>
@@ -177,15 +200,21 @@
   </div>
 
   <nav class="mt-5 d-flex justify-content-center" *ngIf="paginationMeta && paginationMeta.last_page > 1">
-    <ul class="pagination shadow-sm">
+    <ul class="pagination shadow-sm border rounded-3 overflow-hidden">
       <li class="page-item" [class.disabled]="paginationMeta.current_page === 1">
-        <button class="page-link" (click)="allerAPage(paginationMeta.current_page - 1)">Précédent</button>
+        <button class="page-link border-0 py-2 px-3 text-dark" (click)="allerAPage(paginationMeta.current_page - 1)">
+          <i class="bi bi-chevron-left"></i>
+        </button>
       </li>
       <li class="page-item active">
-        <span class="page-link px-4">Page {{ paginationMeta.current_page }} / {{ paginationMeta.last_page }}</span>
+        <span class="page-link bg-primary border-primary px-4 py-2 fw-bold text-white">
+          {{ paginationMeta.current_page }} / {{ paginationMeta.last_page }}
+        </span>
       </li>
       <li class="page-item" [class.disabled]="paginationMeta.current_page === paginationMeta.last_page">
-        <button class="page-link" (click)="allerAPage(paginationMeta.current_page + 1)">Suivant</button>
+        <button class="page-link border-0 py-2 px-3 text-dark" (click)="allerAPage(paginationMeta.current_page + 1)">
+          <i class="bi bi-chevron-right"></i>
+        </button>
       </li>
     </ul>
   </nav>
