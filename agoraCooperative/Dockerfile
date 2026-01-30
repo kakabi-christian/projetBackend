@@ -1,39 +1,42 @@
-# 1. Image de base : PHP avec extensions nécessaires pour Laravel
-FROM php:8.2-fpm-alpine
+# 1. Image de base avec Apache (OBLIGATOIRE pour servir /storage)
+FROM php:8.2-apache
 
-# 2. Installation des dépendances système et extensions PHP
-RUN apk add --no-cache \
+# 2. Dépendances système + extensions PHP nécessaires à Laravel
+RUN apt-get update && apt-get install -y \
     libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     zip \
-    libzip-dev \
     unzip \
-    oniguruma-dev \
-    $PHPIZE_DEPS
+    libzip-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring zip exif bcmath gd
 
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
+# 3. Activer mod_rewrite (Laravel)
+RUN a2enmod rewrite
 
-# 3. Installation de Composer
+# 4. Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 4. Dossier de travail
-WORKDIR /var/www
+# 5. Dossier de travail Apache
+WORKDIR /var/www/html
 
-# 5. Copie du code
+# 6. Copier le projet Laravel
 COPY . .
 
-# 6. Installation des dépendances Laravel
+# 7. Installer les dépendances Laravel
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 7. Permissions pour Laravel
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-
-# 🔥 8. CRÉATION DU LIEN SYMBOLIQUE storage → public/storage
+# 8. Créer le lien storage → public/storage
 RUN php artisan storage:link || true
 
-# 9. Exposition du port
+# 9. Permissions Laravel
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# 10. Apache doit pointer vers /public
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+
 EXPOSE 80
 
-# 10. Lancement de Laravel
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-80}
+# 11. Lancement Apache
+CMD ["apache2-foreground"]
