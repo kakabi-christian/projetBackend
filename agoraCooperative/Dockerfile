@@ -1,36 +1,48 @@
-# 1. Image de base : PHP avec extensions nécessaires pour Laravel
-FROM php:8.2-fpm-alpine
+# 1. Image de base avec Apache
+FROM php:8.2-apache
 
-# 2. Installation des dépendances système et extensions PHP
-RUN apk add --no-cache \
+# 2. Dépendances système + extensions PHP pour Laravel
+RUN apt-get update && apt-get install -y \
     libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    zip \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
     libzip-dev \
+    zip \
     unzip \
-    oniguruma-dev \
-    $PHPIZE_DEPS
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring zip exif bcmath gd \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
+# 3. Activer mod_rewrite pour Laravel
+RUN a2enmod rewrite
 
-# 3. Installation de Composer
+# 4. Forcer un seul MPM (ici event)
+RUN a2dismod mpm_prefork || true \
+    && a2enmod mpm_event
+
+# 5. Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 4. Dossier de travail
-WORKDIR /var/www
+# 6. Dossier de travail
+WORKDIR /var/www/html
 
-# 5. Copie du code
+# 7. Copier le projet Laravel
 COPY . .
 
-# 6. Installation des dépendances Laravel
+# 8. Installer les dépendances Laravel
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 7. Permissions pour Laravel
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# 9. Créer le lien storage → public/storage
+RUN php artisan storage:link || true
 
-# 8. Exposition du port (Railway utilise souvent 8080 ou 80)
+# 10. Permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# 11. Pointer Apache sur /public
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+
 EXPOSE 80
 
-# 9. Commande de lancement dynamique
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-80}
+# 12. Lancement Apache
+CMD ["apache2-foreground"]
