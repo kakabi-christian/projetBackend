@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { EvenementService } from '../../services/evenement.service';
 import { Evenement } from '../../models/evenement.model';
+import { API_CONFIG } from '../../services/api'; // On importe la config centrale
 
 @Component({
   selector: 'app-evenements-content',
@@ -18,7 +19,8 @@ export class EvenementsContent implements OnInit, OnDestroy {
   isLoading = true;
   error: string | null = null;
 
-  readonly backendUrl = 'http://localhost:8000/';
+  // On utilise la constante globale au lieu du localhost en dur
+  readonly storageUrl = API_CONFIG.storageUrl;
 
   constructor(private evenementService: EvenementService) {}
 
@@ -30,16 +32,25 @@ export class EvenementsContent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.evenementService.getEvenements().subscribe({
       next: (res) => {
-        this.evenements = res.evenements.data;
+        // Adaptation selon la structure de ta réponse API
+        this.evenements = res.evenements?.data || [];
         this.applyFiltre();
         this.isLoading = false;
       },
       error: (err) => {
-        console.error(err);
+        console.error('Erreur événements:', err);
         this.error = 'Impossible de charger les événements.';
         this.isLoading = false;
       }
     });
+  }
+
+  /**
+   * Diagnostic et fallback pour les images d'événements
+   */
+  handleImageError(event: any) {
+    const imgElement = event.target as HTMLImageElement;
+    imgElement.src = 'assets/images/default-event.jpg';
   }
 
   setFiltre(f: 'tous' | 'planifie' | 'termine') {
@@ -55,14 +66,21 @@ export class EvenementsContent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Génère l'URL correcte en fonction de l'environnement (Local vs Cloud)
+   */
   getEventImage(imageUrl: string | null | undefined): string {
-  if (!imageUrl) return 'assets/images/default-event.jpg';
-  return imageUrl.startsWith('http') ? imageUrl : `${this.backendUrl}${imageUrl}`;
-}
-
+    if (!imageUrl) return 'assets/images/default-event.jpg';
+    
+    // Si l'URL commence déjà par http, on la laisse tel quel
+    if (imageUrl.startsWith('http')) return imageUrl;
+    
+    // Sinon, on concatène avec la base URL (Railway ou Localhost)
+    return `${this.storageUrl}/${imageUrl}`;
+  }
 
   getStatutClass(statut: string): string {
-    const map: any = {
+    const map: { [key: string]: string } = {
       planifie: 'status-planifie',
       en_cours: 'status-en-cours',
       termine: 'status-termine'
@@ -71,11 +89,14 @@ export class EvenementsContent implements OnInit, OnDestroy {
   }
 
   formatDate(dateStr: string) {
+    if (!dateStr) return { day: '--', month: '---' };
     const date = new Date(dateStr);
     const months = ['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'];
-    return { day: date.getDate().toString().padStart(2,'0'), month: months[date.getMonth()] };
+    return { 
+      day: date.getDate().toString().padStart(2,'0'), 
+      month: months[date.getMonth()] 
+    };
   }
 
   ngOnDestroy(): void {}
-
 }
