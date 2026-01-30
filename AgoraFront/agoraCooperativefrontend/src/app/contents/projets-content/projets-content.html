@@ -1,6 +1,5 @@
 <section class="projects-section">
 
-  <!--PROJETS DYNAMIQUES -->
   <h2 class="section-title scroll-animate animate-fade-up">Nos Projets en Action</h2>
   <p class="section-subtitle scroll-animate animate-fade-up" style="animation-delay: 0.1s">
     Découvrez les initiatives portées par nos membres pour transformer notre communauté
@@ -12,49 +11,61 @@
     </a>
   </div>
 
-
   <div class="projects-grid">
     <ng-container *ngIf="!isLoadingStats && projetsTermines.length > 0">
-
-      <div *ngFor="let projet of projetsTermines; let i = index" class="project-card scroll-animate animate-fade-up"
-        [style.animation-delay]="(i * 0.1) + 's'">
+      <div *ngFor="let projet of projetsTermines; let i = index" 
+           class="project-card scroll-animate animate-fade-up"
+           [style.animation-delay]="(i * 0.1) + 's'">
+        
         <div class="project-image">
           <img [src]="getImageUrl(projet.image_url)" [alt]="projet.nom">
-          <div [class]="getProjetBadgeClass(projet.statut)">{{ getProjetBadgeText(projet.statut) }}</div>
+          <div [class]="getProjetBadgeClass(projet.statut)">
+            {{ getProjetBadgeText(projet.statut) }}
+          </div>
         </div>
+
         <div class="project-content">
           <h3>{{ projet.nom }}</h3>
-          <p>{{ projet.description }}</p>
+          <p>{{ projet.description | slice:0:120 }}{{ (projet.description?.length ?? 0) > 120 ? '...' : '' }}</p>
+          
           <div class="project-team">
             <div class="team-avatars">
-              <span class="team-count" *ngIf="projet.participants_count > 0">+{{ projet.participants_count }}</span>
+              <span class="team-count" *ngIf="projet.participants_count > 0">
+                +{{ projet.participants_count }} membres
+              </span>
             </div>
-            <span class="team-label">{{ projet.type }}</span>
+            <span class="team-label text-uppercase small">{{ projet.type }}</span>
           </div>
-          <div>
-            <a href="#" class="project-action">Voir les détails →</a>
+
+          <div class="mt-3">
+            <a [routerLink]="['/projets', projet.id]" class="project-action">Voir les détails →</a>
           </div>
         </div>
       </div>
     </ng-container>
 
     <div *ngIf="!isLoadingStats && projetsTermines.length === 0"
-      class="no-projects-card scroll-animate animate-fade-up">
-      <div class="no-projects-icon"><i class="bi bi-folder2-open"></i></div>
-      <h3>Aucun projet terminé</h3>
-      <p>
+      class="no-projects-card scroll-animate animate-fade-up w-100 text-center py-5">
+      <div class="no-projects-icon mb-3">
+        <i class="bi bi-folder2-open display-4 text-muted"></i>
+      </div>
+      <h3 class="fw-bold">Aucun projet terminé</h3>
+      <p class="text-muted">
         Aucun projet n’a encore été finalisé.<br />
         Revenez bientôt pour découvrir nos réalisations.
       </p>
     </div>
 
-
-    <!--Loader -->
-    <div *ngIf="isLoadingStats" class="project-card loader-card">
-
+    <div *ngIf="isLoadingStats" class="project-card loader-card w-100 text-center py-5">
+      <div class="spinner-border text-primary-custom mb-3" role="status"></div>
       <div class="project-content">
-        <p>Chargement des projets...</p>
+        <p class="fw-medium">Chargement des projets...</p>
       </div>
+    </div>
+
+    <div *ngIf="!isLoadingStats && errorStats" class="alert alert-light border text-center w-100">
+      <p class="text-danger mb-2"><i class="bi bi-exclamation-triangle me-2"></i>{{ errorStats }}</p>
+      <button class="btn btn-sm btn-outline-secondary" (click)="retry()">Réessayer</button>
     </div>
   </div>
 
