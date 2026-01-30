@@ -76,11 +76,11 @@
           /> -->
           <img
   [src]="p.image_url ? 
-          (p.image_url.startsWith('http') ? p.image_url : API_CONFIG.storageUrl + '/' + p.image_url) 
-          : 'assets/default-project.jpg'"
+        (p.image_url.startsWith('http') ? p.image_url : API_CONFIG.storageUrl + '/' + p.image_url) 
+        : 'assets/default-project.jpg'"
   class="card-img-top"
   style="height: 180px; object-fit: cover"
-  (error)="$any($event.target).src = 'assets/default-project.jpg'"
+  (error)="handleImageError($event, p)"
 />
 
           <!-- Badge statut -->
