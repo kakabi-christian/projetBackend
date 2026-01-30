@@ -2,87 +2,83 @@
 
 namespace App\Mail\Transport;
 
-use Mailjet\Client;
-use Mailjet\Resources;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Mail\Transport\Transport;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Swift_Mime_SimpleMessage;
 
 class MailjetTransport extends Transport
 {
-    public function __construct() { }
-
     public function send(Swift_Mime_SimpleMessage $message, &$failedRecipients = null)
     {
-        Log::info("--- 📬 [MAILJET TRANSPORT] Début de l'envoi ---");
+        Log::info("--- 🚀 [MAILJET DEBUG] VERSION COMPATIBLE & LOGS ---");
 
-        $apiKey = config('services.mailjet.key');
-        $apiSecret = config('services.mailjet.secret');
+        // 1. RÉCUPÉRATION DES PARAMÈTRES
+        $key = config('services.mailjet.key');
+        $secret = config('services.mailjet.secret');
+        $from = config('mail.from.address');
+        $fromName = config('mail.from.name', 'Agora');
 
-        if (!$apiKey || !$apiSecret) {
-            Log::error("❌ [MAILJET TRANSPORT] Clés API manquantes.");
-            return 0;
-        }
+        Log::info("[DEBUG 1] KEY: " . ($key ? "OK (".strlen($key)." chars)" : "MANQUANTE ❌"));
+        Log::info("[DEBUG 1] FROM: " . ($from ?: "VIDE ❌"));
 
-        // Désactivation SSL pour Windows + Timeout de 15s pour éviter les blocages
-        $client = new Client($apiKey, $apiSecret, false, [
-            'version' => 'v3.1',
-            'timeout' => 15
-        ]);
-
-        // Préparation rigoureuse des destinataires
+        // 2. EXTRACTION DES DESTINATAIRES
         $to = [];
-        $recipients = $message->getTo();
-        if (empty($recipients)) {
-            Log::error("❌ [MAILJET] Aucun destinataire trouvé dans le message.");
-            return 0;
-        }
-
-        foreach ($recipients as $email => $name) {
+        foreach ($message->getTo() as $email => $name) {
             $to[] = [
-                'Email' => (string) $email,
-                'Name'  => (string) ($name ?: $email)
+                'Email' => (string)$email, 
+                'Name'  => (string)($name ?: $email)
             ];
         }
+        
+        if (isset($to[0])) {
+            Log::info("[DEBUG 2] DESTINATAIRE CIBLE: " . $to[0]['Email']);
+        }
 
-        // Construction du corps conforme à l'API v3.1
-        $body = [
+        // 3. PRÉPARATION DU CORPS DE LA REQUÊTE (API v3.1)
+        $payload = [
             'Messages' => [
                 [
                     'From' => [
-                        'Email' => (string) config('mail.from.address'),
-                        'Name'  => (string) config('mail.from.name'),
+                        'Email' => (string)$from,
+                        'Name'  => (string)$fromName,
                     ],
                     'To' => $to,
-                    'Subject' => (string) $message->getSubject(),
-                    'HTMLPart' => (string) $message->getBody(),
-                    'TextPart' => (string) ($this->getTextPart($message) ?: ""),
+                    'Subject' => (string)$message->getSubject(),
+                    'HTMLPart' => (string)$message->getBody(),
                 ]
             ]
         ];
 
         try {
-            Log::info("[MAILJET] Tentative d'envoi API pour : " . $to[0]['Email']);
-            
-            $response = $client->post(Resources::$Email, ['body' => $body]);
+            Log::info("[DEBUG 3] APPEL API MAILJET EN COURS...");
 
-            // Analyse de la réponse
-            if ($response->success()) {
-                Log::info("✅ [MAILJET SUCCÈS] Email accepté par l'API.");
+            /**
+             * Utilisation de Http::post (Guzzle)
+             * withoutVerifying() est crucial pour ton environnement Windows local
+             */
+            $response = Http::withBasicAuth($key, $secret)
+                ->timeout(30)
+                ->withoutVerifying() 
+                ->post('https://api.mailjet.com/v3.1/send', $payload);
+
+            // 4. ANALYSE DU RÉSULTAT
+            Log::info("[DEBUG 4] CODE HTTP REÇU : " . $response->status());
+            
+            if ($response->successful()) {
+                Log::info("✅ [MAILJET] SUCCÈS : L'email a été accepté par le serveur.");
                 return $this->numberOfRecipients($message);
-            } else {
-                Log::error("❌ [MAILJET API ERROR] Statut HTTP : " . $response->getStatus());
-                Log::error("[DEBUG DATA] : " . json_encode($response->getData(), JSON_PRETTY_PRINT));
-                return 0;
             }
+
+            Log::error("❌ [MAILJET API ERROR] L'API a renvoyé une erreur.");
+            Log::error("-> Status: " . $response->status());
+            Log::error("-> Body: " . $response->body());
+            return 0;
+
         } catch (\Exception $e) {
-            Log::error("❌ [MAILJET EXCEPTION] Erreur : " . $e->getMessage());
+            Log::error("🚨 [ERREUR SYSTÈME] Problème de connexion ou de code.");
+            Log::error("-> Message: " . $e->getMessage());
             return 0;
         }
-    }
-
-    protected function getTextPart(Swift_Mime_SimpleMessage $message)
-    {
-        return $message->getContentType() === 'text/plain' ? $message->getBody() : "";
     }
 }

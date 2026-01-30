@@ -36,7 +36,7 @@ return [
     ],
     'mailjet' => [
     'key' => env('MAILJET_API_KEY'),
-    'secret' => env('MAILJET_SECRET_KEY'),
+    'secret' => env('MAILJET_API_SECRET'),
 ],
 
 ];
