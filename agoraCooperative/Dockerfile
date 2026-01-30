@@ -29,8 +29,11 @@ RUN composer install --no-interaction --optimize-autoloader --no-dev
 # 7. Permissions pour Laravel
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# 8. Exposition du port (Railway utilise souvent 8080 ou 80)
+# 🔥 8. CRÉATION DU LIEN SYMBOLIQUE storage → public/storage
+RUN php artisan storage:link || true
+
+# 9. Exposition du port
 EXPOSE 80
 
-# 9. Commande de lancement dynamique
+# 10. Lancement de Laravel
 CMD php artisan serve --host=0.0.0.0 --port=${PORT:-80}
