@@ -34,5 +34,9 @@ return [
         'token' => env('CAMPAY_TOKEN'),
         'admin_phone' => env('CAMPAY_ADMIN_PHONE'),
     ],
+    'mailjet' => [
+    'key' => env('MAILJET_API_KEY'),
+    'secret' => env('MAILJET_SECRET_KEY'),
+],
 
 ];
