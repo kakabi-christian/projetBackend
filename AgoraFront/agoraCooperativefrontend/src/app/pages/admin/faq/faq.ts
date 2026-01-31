@@ -1,107 +1,78 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Faq, FaqPagination } from '../../../models/faq.model';
 import { AuthService } from '../../../services/auth.service';
-import { FaqService } from '../../../services/faq';
+import { MembreService } from '../../../services/membre.service';
+import { Membre } from '../../../models/membre.model';
 
 @Component({
-  selector: 'app-faq',
+  selector: 'app-membre-admin',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './faq.html',
-  styleUrl: './faq.css',
+  templateUrl: './faq.html', // Gardé selon ton arborescence actuelle
+  styleUrl: './faq.css',     // Gardé selon ton arborescence actuelle
 })
-export class FaqComponent implements OnInit {
-  faqs: Faq[] = [];
-  paginationMeta?: FaqPagination;
+export class MembreAdmin implements OnInit {
+  membres: Membre[] = [];
   loading = false;
-  showModal = false;
-  isEditMode = false;
-
-  // Modèle pour le formulaire
-  currentFaq: Faq = this.getEmptyFaq();
-
-  // Filtres
-  categories = ['generale', 'membres', 'projets', 'dons', 'evenements', 'administratif'];
-  selectedCategorie = '';
+  exporting = false;
+  searchTerm = '';
 
   constructor(
-    private faqService: FaqService,
+    private membreService: MembreService,
     private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.chargerFaqs();
+    this.chargerMembres();
   }
 
-  chargerFaqs(page: number = 1): void {
+  chargerMembres(): void {
     this.loading = true;
-    this.faqService.getFaqs(page, 10).subscribe({
+    this.membreService.getTousLesMembres().subscribe({
       next: (response) => {
-        this.faqs = response.data;
-        this.paginationMeta = response;
+        this.membres = response.data;
         this.loading = false;
       },
       error: (err) => {
-        console.error('Erreur chargement FAQ', err);
+        console.error('Erreur chargement membres', err);
         this.loading = false;
       }
     });
   }
 
+  exporterEnPDF(): void {
+    this.exporting = true;
+    this.membreService.exporterMembresPDF().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const date = new Date().toISOString().split('T')[0];
+        link.download = `liste_membres_agora_${date}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: (err) => {
+        console.error('Erreur export PDF', err);
+        this.exporting = false;
+      }
+    });
+  }
+
+  // CORRECTION : Suppression de l'accent pour éviter le Parser Error
+  get membresFiltres(): Membre[] {
+    if (!this.searchTerm) return this.membres;
+    const term = this.searchTerm.toLowerCase();
+    return this.membres.filter(m => 
+      m.nom.toLowerCase().includes(term) || 
+      m.prenom.toLowerCase().includes(term) || 
+      m.code_membre.toLowerCase().includes(term)
+    );
+  }
+
   isAdmin(): boolean {
-    return this.authService.isAdmin(); // Assure-toi que cette méthode existe dans ton AuthService
-  }
-
-  ouvrirModal(faq?: Faq): void {
-    this.isEditMode = !!faq;
-    this.currentFaq = faq ? { ...faq } : this.getEmptyFaq();
-    this.showModal = true;
-  }
-
-  enregistrer(): void {
-    if (this.isEditMode && this.currentFaq.id) {
-      this.faqService.updateFaq(this.currentFaq.id, this.currentFaq).subscribe({
-        next: () => this.finaliserAction('FAQ mise à jour'),
-        error: (err) => console.error(err)
-      });
-    } else {
-      this.faqService.createFaq(this.currentFaq).subscribe({
-        next: () => this.finaliserAction('FAQ créée'),
-        error: (err) => console.error(err)
-      });
-    }
-  }
-
-  supprimer(id: number): void {
-    if (confirm('Voulez-vous vraiment supprimer cette FAQ ?')) {
-      this.faqService.deleteFaq(id).subscribe({
-        next: () => this.chargerFaqs(),
-        error: (err) => console.error(err)
-      });
-    }
-  }
-
-  private finaliserAction(message: string): void {
-    this.showModal = false;
-    this.chargerFaqs();
-    this.currentFaq = this.getEmptyFaq();
-  }
-
-  private getEmptyFaq(): Faq {
-    return {
-      question: '',
-      reponse: '',
-      categorie: 'generale',
-      ordre_affichage: 0,
-      est_actif: true
-    };
-  }
-
-  allerAPage(page: number): void {
-    if (page >= 1 && page <= (this.paginationMeta?.last_page || 1)) {
-      this.chargerFaqs(page);
-    }
+    return this.authService.isAdmin();
   }
 }

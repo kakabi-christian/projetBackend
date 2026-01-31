@@ -128,6 +128,9 @@ Route::middleware([
     'token.expiration',
     'admin.only'
 ])->prefix('admin')->group(function () {
+    // Gestion des Membres (Admin)
+    Route::get('/membres', [MembreController::class, 'index']); // Liste des membres (Nom, Prénom, Code)
+    Route::get('/membres/export/pdf', [MembreController::class, 'exportPDF']); // Export PDF de la liste
 
     // Gestion Adhésions
     Route::get('/demandes-adhesion', [DemandeAdhesionController::class, 'index']);
@@ -188,5 +191,6 @@ Route::middleware([
     Route::delete('/participations/{id}', [ParticipationProjetController::class, 'retirerParticipant']);
     Route::post('/payout', [PaymentController::class, 'payoutToAdmin']);
     Route::get('/stats/dashboard', [StatsController::class, 'getDashboardStats']);
+    
 
 });

@@ -6,7 +6,6 @@ import { Member } from './pages/member/member';
 import { HomeAdmin } from './pages/admin/home/home';
 import { Project } from './pages/admin/project/project';
 import { Partners } from './pages/admin/partenaire/partenaire';
-import { FaqComponent } from './pages/admin/faq/faq';
 import { MeetingComponent } from './pages/admin/meeting/meeting';
 import { Dons } from './pages/dons/dons';
 import { Contact } from './pages/contact/contact';
@@ -16,7 +15,7 @@ import { Notification } from './pages/admin/notification/notification';
 import { Evenement } from './pages/admin/evenement/evenement';
 // Importation du Layout Admin
 import { AdminLayout } from './components/admin/admin-layout/admin-layout';
-
+import { MembreAdmin } from './pages/admin/faq/faq';
 import { MemberLayout } from './components/member/member-layout/member-layout';
 import { TableauDeBordMembre } from './pages/membre/tableau-de-bord/tableau-de-bord';
 import { ProfilMembre } from './pages/membre/profil/profil';
@@ -95,7 +94,7 @@ export const routes: Routes = [
       { path: 'profil', component: Profil },
       { path: 'projects', component: Project },
       { path: 'partner', component: Partners },
-      { path: 'faq', component: FaqComponent },
+      { path: 'membres', component: MembreAdmin },
       { path: 'meetings', component: MeetingComponent },
       { path: 'contact', component: AdminContactComponent },
       { path: 'notifications', component: Notification },

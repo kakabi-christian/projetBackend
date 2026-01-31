@@ -13,6 +13,7 @@ use App\Models\Membre;
 use App\Services\FileStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class MembreController extends Controller
 {
@@ -29,6 +30,53 @@ class MembreController extends Controller
      * @param  string  $codeMembre
      * @return \Illuminate\Http\Response
      */
+    /**
+ * Liste tous les membres (Nom, Prénom, Code)
+ */
+/**
+ * Liste tous les membres (Utilise MembreResource)
+ */
+public function index()
+{
+    // 1. Vérification de sécurité
+    if (auth()->user()->role !== 'administrateur') {
+        return response()->json(['message' => 'Accès refusé.'], 403);
+    }
+
+    // 2. Récupération des membres (on récupère tout pour que la ressource fonctionne)
+    $membres = Membre::orderBy('nom', 'asc')->get();
+
+    // 3. Retourne la collection via la ressource pour un formatage parfait
+    return MembreResource::collection($membres)->additional([
+        'success' => true
+    ]);
+}
+
+/**
+ * Export de la liste des membres en PDF
+ */
+public function exportPDF()
+{
+    // 1. Vérification de sécurité
+    if (auth()->user()->role !== 'administrateur') {
+        return response()->json(['message' => 'Accès refusé.'], 403);
+    }
+
+    // 2. Récupération des données nécessaires pour le tableau PDF
+    $membres = Membre::select('code_membre', 'nom', 'prenom', 'email', 'telephone', 'date_inscription')
+                     ->orderBy('nom', 'asc')
+                     ->get();
+
+    // 3. Génération du PDF via la vue blade
+    // Assure-toi d'avoir installé : composer require barryvdh/laravel-dompdf
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.liste_membres', compact('membres'));
+
+    // 4. Configuration du format (A4 Portrait)
+    $pdf->setPaper('a4', 'portrait');
+
+    // 5. Téléchargement direct
+    return $pdf->download('liste_membres_agora_' . date('d_m_Y') . '.pdf');
+}
     public function show($codeMembre)
     {
         $membre = Membre::where('code_membre', $codeMembre)
